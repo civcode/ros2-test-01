@@ -10,10 +10,11 @@ rclcpp::Node::SharedPtr g_node = nullptr;
 
 void subscription_callback(const std_msgs::msg::String::SharedPtr msg) {
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "subscription_callback");  
+  //RCLCPP_INFO(g_node->get_logger(), "subscription_callback");  
   std::cout << "test" << std::endl;
 }
 
-int main(int argc, char ** argv)
+int main(int argc, char *argv[])
 {
   // (void) argc;
   // (void) argv;
@@ -30,12 +31,14 @@ int main(int argc, char ** argv)
   //node->create_subscription("/can0/tx/trajectory_data", rclcpp::QoS::best_effort(), )
   //node->create_subscription<std_msgs::msg::String>("/topic", qos, subscription_callback);
   //node->create_subscription<std_msgs::msg::String>("/topic", 10, subscription_callback);
-  g_node->create_subscription<std_msgs::msg::String>("topic", 10, subscription_callback);
+  auto subscription = g_node->create_subscription<std_msgs::msg::String>("/topic", qos, subscription_callback);
 
   //node->create_sub
 
   rclcpp::spin(g_node);
   rclcpp::shutdown();
+  subscription = nullptr;
+  g_node = nullptr;
 
   return 0;
 }
