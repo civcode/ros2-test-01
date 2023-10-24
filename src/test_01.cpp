@@ -1,41 +1,31 @@
 #include "rclcpp/rclcpp.hpp"
-
-#include <cstdio>
-#include <memory>
-
-//#include "rclcpp/qos.hpp"
 #include "std_msgs/msg/string.hpp"
 
 rclcpp::Node::SharedPtr g_node = nullptr;
 
-void subscription_callback(const std_msgs::msg::String::SharedPtr msg) {
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "subscription_callback");  
-  std::cout << "test" << std::endl;
+/* We do not recommend this style anymore, because composition of multiple
+ * nodes in the same executable is not possible. Please see one of the subclass
+ * examples for the "new" recommended styles. This example is only included
+ * for completeness because it is similar to "classic" standalone ROS nodes. */
+
+void topic_callback(const std_msgs::msg::String::SharedPtr msg)
+{
+  RCLCPP_INFO(g_node->get_logger(), "I heard: '%s'", msg->data.c_str());
 }
 
-int main(int argc, char ** argv)
+int main(int argc, char * argv[])
 {
-  // (void) argc;
-  // (void) argv;
-
-  printf("hello world test_pkg_01 package\n");
-
   rclcpp::init(argc, argv);
-  //std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("test_01");
-  g_node = rclcpp::Node::make_shared("test_01");
-
-  //auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
-  //auto qos = rclcpp::QoS(rclcpp::QoS::best_effort());
-  auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
-  //node->create_subscription("/can0/tx/trajectory_data", rclcpp::QoS::best_effort(), )
-  //node->create_subscription<std_msgs::msg::String>("/topic", qos, subscription_callback);
-  //node->create_subscription<std_msgs::msg::String>("/topic", 10, subscription_callback);
-  g_node->create_subscription<std_msgs::msg::String>("topic", 10, subscription_callback);
-
-  //node->create_sub
-
+  g_node = rclcpp::Node::make_shared("minimal_subscriber");
+  auto subscription =
+    g_node->create_subscription<std_msgs::msg::String>("topic", 10, topic_callback);
   rclcpp::spin(g_node);
   rclcpp::shutdown();
-
+  // TODO(clalancette): It would be better to remove both of these nullptr
+  // assignments and let the destructors handle it, but we can't because of
+  // https://github.com/eProsima/Fast-RTPS/issues/235 .  Once that is fixed
+  // we should probably look at removing these two assignments.
+  subscription = nullptr;
+  g_node = nullptr;
   return 0;
 }
